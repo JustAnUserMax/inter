@@ -6,6 +6,8 @@ from datetime import datetime
 ALLOWED_IPS = [
     '95.31.142.219',
     '127.0.0.1',
+    '::1',
+    'localhost'  # Если используется DNS-имя
 ]
 
 
@@ -117,7 +119,8 @@ def handle_connection(proxy_socket, connection_id):
 
 
 def start_server(host, port):
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket = socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET,
+                                  socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((host, port))
     server_socket.listen(10)
@@ -129,13 +132,16 @@ def start_server(host, port):
         proxy_socket, addr = server_socket.accept()
         client_ip = addr[0]
 
+        # Логируем полученный IP
+        log_message(f"Получен IP: {client_ip} (тип: {type(client_ip)})")
+
         if client_ip not in ALLOWED_IPS:
-            log_message(f"Отклонено соединение от запрещенного IP: {client_ip}")
+            log_message(f"Отклонено соединение от IP: {client_ip}")
             safe_close(proxy_socket)
             continue
 
         connection_id += 1
-        log_message(f"Соединение от {addr}", connection_id)
+        log_message(f"Разрешено соединение от {addr}", connection_id)
         threading.Thread(
             target=handle_connection,
             args=(proxy_socket, connection_id)
