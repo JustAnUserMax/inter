@@ -3,7 +3,10 @@ import threading
 import logging
 from datetime import datetime
 
-ALLOWED_IP = '95.31.142.219'  # Разрешенный IP-адрес
+ALLOWED_IPS = [
+    '95.31.142.219',
+    '127.0.0.1',
+]
 
 
 def safe_close(sock):
@@ -126,7 +129,7 @@ def start_server(host, port):
         proxy_socket, addr = server_socket.accept()
         client_ip = addr[0]
 
-        if client_ip != ALLOWED_IP:
+        if client_ip not in ALLOWED_IPS:
             log_message(f"Отклонено соединение от запрещенного IP: {client_ip}")
             safe_close(proxy_socket)
             continue
@@ -140,4 +143,4 @@ def start_server(host, port):
 
 
 if __name__ == "__main__":
-    start_server('0.0.0.0', 80)
+    start_server('0.0.0.0', 9999)
